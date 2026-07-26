@@ -1,9 +1,8 @@
 """
-Downloads a single day of AIS (Automatic Identification System) vessel
-traffic data from the Danish Maritime Authority, extracts it, and filters
-it down to the Storebælt (Great Belt) strait bounding box.
+Downloads a 2-month batch of AIS (Automatic Identification System) vessel traffic data
+from the Danish Maritime Authority. Extracts, filters to the Storebælt bounding box,
+cleans up raw files immediately, and merges everything into one combined dataset.
 """
-
 import os
 import zipfile
 
@@ -11,8 +10,10 @@ import pandas as pd
 import requests
 
 # --- Settings ---
-DATE = "2026-06-15"  # target day, format YYYY-MM-DD
+START_DATE = "2026-05-01"
+END_DATE = "2026-06-30"
 DATA_DIR = "data"
+COMBINED_PATH = os.path.join(DATA_DIR, "storebaelt_combined.csv")
 
 # Storebælt bounding box
 LAT_MIN, LAT_MAX = 55.0, 55.6
@@ -20,52 +21,34 @@ LON_MIN, LON_MAX = 10.5, 11.3
 
 os.makedirs(DATA_DIR, exist_ok=True)
 
-SOURCE_URL = f"http://aisdata.ais.dk/aisdk-{DATE}.zip"
-ZIP_PATH = os.path.join(DATA_DIR, f"aisdk-{DATE}.zip")
-CSV_PATH = os.path.join(DATA_DIR, f"aisdk-{DATE}.csv")
-OUTPUT_PATH = os.path.join(DATA_DIR, f"storebaelt_{DATE}.csv")
 
+def download_and_process(date_str: str) -> None:
+    source_url = f"http://aisdata.ais.dk/aisdk-{date_str}.zip"
+    zip_path = os.path.join(DATA_DIR, f"aisdk-{date_str}.zip")
+    raw_csv_path = os.path.join(DATA_DIR, f"aisdk-{date_str}.csv")
+    output_path = os.path.join(DATA_DIR, f"storebaelt_{date_str}.csv")
 
-def download(url: str, zip_path: str) -> None:
-    """Stream-download the zip file (several hundred MB) in 1MB chunks."""
-    if os.path.exists(zip_path):
-        print(f"{zip_path} already exists, skipping download.")
+    if os.path.exists(output_path):
+        print(f"[{date_str}] Filtered data already exists. Skipping.")
         return
 
-    print(f"Downloading: {url}")
-    response = requests.get(url, stream=True)
-    response.raise_for_status()
-
-    total_size = int(response.headers.get("content-length", 0))
-    downloaded = 0
+    print(f"[{date_str}] Downloading raw data...")
+    response = requests.get(source_url, stream=True)
+    if response.status_code != 200:
+        print(f"[{date_str}] Data not found on server (Status: {response.status_code}).")
+        return
 
     with open(zip_path, "wb") as f:
         for chunk in response.iter_content(chunk_size=1024 * 1024):
             f.write(chunk)
-            downloaded += len(chunk)
-            if total_size:
-                print(f"\r  {downloaded / total_size * 100:.1f}%", end="")
 
-    print("\nDownload complete.")
-
-
-def extract(zip_path: str, data_dir: str) -> None:
-    """Extract the CSV file from the downloaded zip archive."""
-    print("Extracting zip archive...")
+    print(f"[{date_str}] Extracting...")
     with zipfile.ZipFile(zip_path) as archive:
-        archive.extractall(data_dir)
-    print("Extraction complete.")
+        archive.extractall(DATA_DIR)
 
-
-def filter_region(csv_path: str, output_path: str) -> None:
-    """
-    Read the full-country CSV in chunks (it can be several GB) and keep
-    only the rows that fall inside the Storebælt bounding box.
-    """
-    print("Filtering by region...")
+    print(f"[{date_str}] Filtering for Storebælt region...")
     kept_chunks = []
-
-    for chunk in pd.read_csv(csv_path, chunksize=200_000):
+    for chunk in pd.read_csv(raw_csv_path, chunksize=200_000):
         filtered = chunk[
             (chunk["Latitude"] >= LAT_MIN) & (chunk["Latitude"] <= LAT_MAX) &
             (chunk["Longitude"] >= LON_MIN) & (chunk["Longitude"] <= LON_MAX)
@@ -73,13 +56,51 @@ def filter_region(csv_path: str, output_path: str) -> None:
         if not filtered.empty:
             kept_chunks.append(filtered)
 
-    result = pd.concat(kept_chunks, ignore_index=True) if kept_chunks else pd.DataFrame()
-    result.to_csv(output_path, index=False)
-    print(f"Found {len(result)} rows in the target region -> {output_path}")
+    if kept_chunks:
+        result = pd.concat(kept_chunks, ignore_index=True)
+        if "# Timestamp" in result.columns:
+            result.rename(columns={"# Timestamp": "Timestamp"}, inplace=True)
+        result.to_csv(output_path, index=False)
+        print(f"[{date_str}] Success! Kept {len(result)} rows.")
+    else:
+        print(f"[{date_str}] No target ships found in bounding box.")
+
+    print(f"[{date_str}] Cleaning up raw files to save disk space...")
+    if os.path.exists(zip_path):
+        os.remove(zip_path)
+    if os.path.exists(raw_csv_path):
+        os.remove(raw_csv_path)
+
+
+def combine_all(data_dir: str, combined_path: str) -> None:
+    """Merge every daily filtered file into a single dataset for analysis."""
+    daily_files = sorted(
+        os.path.join(data_dir, f) for f in os.listdir(data_dir)
+        if f.startswith("storebaelt_") and f.endswith(".csv") and "combined" not in f
+    )
+    if not daily_files:
+        print("No daily files found to combine.")
+        return
+
+    frames = [pd.read_csv(f) for f in daily_files]
+    combined = pd.concat(frames, ignore_index=True)
+    combined.to_csv(combined_path, index=False)
+    print(f"Combined {len(daily_files)} days into {combined_path} ({len(combined)} rows total).")
+
+
+def main():
+    print(f"Starting AIS Data Pipeline for {START_DATE} to {END_DATE}")
+    print("=" * 50)
+
+    dates = pd.date_range(start=START_DATE, end=END_DATE)
+    for current_date in dates:
+        date_str = current_date.strftime("%Y-%m-%d")
+        download_and_process(date_str)
+        print("-" * 50)
+
+    combine_all(DATA_DIR, COMBINED_PATH)
+    print("Pipeline Execution Completed.")
 
 
 if __name__ == "__main__":
-    download(SOURCE_URL, ZIP_PATH)
-    extract(ZIP_PATH, DATA_DIR)
-    filter_region(CSV_PATH, OUTPUT_PATH)
-    
+    main()
