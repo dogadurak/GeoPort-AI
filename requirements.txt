@@ -2,3 +2,5 @@ pandas
 geopandas
 numpy
 requests
+folium
+Pillow
