@@ -1,6 +1,40 @@
-pandas
-geopandas
-numpy
-requests
-folium
-Pillow
+# GeoPort-AI bağımlılıkları
+# Sürümler bu projenin çalışan venv'inden sabitlendi (2026-08-01).
+#
+# Not: torch bu makinede CUDA 12.1 derlemesiyle kurulu (2.5.1+cu121).
+# GPU'lu kurulum için:
+#   pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cu121
+# Aşağıdaki düz sürüm CPU'ya düşer; eğitim çok yavaş olur.
+
+# --- Veri işleme ---
+numpy==2.2.6
+pandas==2.3.3
+scipy==1.15.3
+
+# --- Coğrafi / raster ---
+geopandas==1.1.4
+rasterio==1.4.4
+shapely==2.1.2
+pyproj==3.7.1
+pyogrio==0.13.0
+
+# --- Görüntü işleme ---
+opencv-python==5.0.0.93
+Pillow==12.2.0
+
+# --- Derin öğrenme ---
+torch==2.5.1
+torchvision==0.20.1
+ultralytics==8.4.110
+
+# --- Veri indirme ---
+requests==2.34.2
+
+# --- Dashboard ---
+fastapi==0.141.1
+uvicorn==0.52.0
+
+# --- Görselleştirme / yardımcı ---
+matplotlib==3.10.9
+folium==0.20.0
+tqdm==4.70.0

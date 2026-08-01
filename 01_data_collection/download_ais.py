@@ -3,6 +3,17 @@ Downloads a 2-month batch of AIS (Automatic Identification System) vessel traffi
 from the Danish Maritime Authority. Extracts, filters to the Storebælt bounding box,
 cleans up raw files immediately, and merges everything into one combined dataset.
 """
+
+raise SystemExit(
+    "download_ais.py DEVRE DIŞI (Faz 0, 2026-08-01).\n"
+    "Sebep: bbox'ı config.AOI_BBOX_WGS84'ten değil kendi içinden alıyor (üç ayrı\n"
+    "       bbox sorununun kaynağı). Ayrıca çalıştırıldığında sorgusuz 250 MB'lık\n"
+    "       günlük dosyaları indirmeye başlıyor — istenmeden ağ/disk tüketiyor.\n"
+    "Not:   İhtiyaç duyulan AIS verisi (2026-05-01..06-15) zaten data/ altında.\n"
+    "Yerine: Faz 2'de config'ten AOI okuyan sürüm gelecek.\n"
+    "Ayrıntı: TECHNICAL_PLAN.md"
+)
+
 import os
 import zipfile
 

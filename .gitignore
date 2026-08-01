@@ -216,4 +216,40 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ---------------------------------------------------------------------------
+# GeoPort-AI (Faz 0, 2026-08-01)
+# ---------------------------------------------------------------------------
+# Veri ve model ağırlıkları depoya girmez — yüzlerce MB'lık .pt dosyaları
+# takipliydi. Kod + config + plan takip edilir, çıktılar edilmez.
 data/
+runs/
+_deprecated_*/
+cache/
+scratch/
+
+# Model ağırlıkları (kök dizindeki önceden eğitilmiş modeller dahil)
+*.pt
+*.pth
+*.onnx
+
+# Raster / coğrafi çıktılar
+*.tif
+*.tiff
+*.img
+*.dim
+*.geojson
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+
+# Arşivler
+*.zip
+*.gz
+*.7z
+
+# Ortam
+venv/
+.venv/

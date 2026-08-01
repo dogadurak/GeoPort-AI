@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geoport-AI Dashboard</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar for Stats -->
+        <aside class="sidebar glass-panel">
+            <div class="logo">
+                <h1>Geoport-AI</h1>
+                <span class="badge">MVP v1.0</span>
+            </div>
+            
+            <div class="stats-container">
+                <div class="stat-card">
+                    <h3>Dark Vessels (SAR Only)</h3>
+                    <div class="value dark-vessel-val" id="stat-dark">0</div>
+                    <p class="subtitle">Ships detected by SAR but missing in AIS</p>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>Matched Vessels</h3>
+                    <div class="value matched-val" id="stat-matched">0</div>
+                    <p class="subtitle">Successfully matched SAR & AIS signals</p>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Ghost Signals (AIS Only)</h3>
+                    <div class="value ghost-val" id="stat-ghost">0</div>
+                    <p class="subtitle">In AIS but missed by SAR (Ports/Clutter)</p>
+                </div>
+            </div>
+
+            <div class="legend">
+                <h3>Map Legend</h3>
+                <ul>
+                    <li><span class="dot dark-dot"></span> Dark Vessel</li>
+                    <li><span class="dot matched-dot"></span> Matched Vessel</li>
+                    <li><span class="dot ghost-dot"></span> Ghost Signal (AIS)</li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main Map Area -->
+        <main class="map-wrapper">
+            <div id="map"></div>
+        </main>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="/static/script.js"></script>
+</body>
+</html>
